@@ -19,7 +19,7 @@ def normalize(text: str) -> str:
 def random_probability() -> float:
     return round(random.uniform(0, 100), 2)
 
-@bot.command(name="probability", help="Get a random probability (0-100%) for a given sentence.\nUsage: !probability <your sentence>")
+@bot.command(name="prob", help="Get a random probability (0-100%) for a given sentence.\nUsage: !prob <your sentence>")
 async def probability(ctx, *, sentence: str):
     normalized = normalize(sentence)
     prob = random_probability()
