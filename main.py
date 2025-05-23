@@ -3,11 +3,13 @@ import discord
 from discord.ext import commands
 import random
 import re
+from flask import Flask
+import threading
 
-# Get token from environment variable
+# Discord Bot Setup
 TOKEN = os.getenv("DISCORD_TOKEN")
 if not TOKEN:
-    raise ValueError("No DISCORD_TOKEN found in environment variables")
+    raise ValueError("DISCORD_TOKEN environment variable is missing!")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -16,17 +18,29 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip().lower())
 
-def random_probability() -> float:
-    return round(random.uniform(0, 100), 2)
-
-@bot.command(name="prob", help="Get a random probability (0-100%) for a given sentence.\nUsage: !prob <your sentence>")
+@bot.command(name="probability", help="Returns a random probability (0–100%) for the given sentence.")
 async def probability(ctx, *, sentence: str):
-    normalized = normalize(sentence)
-    prob = random_probability()
-    await ctx.send(f"🔍 Probability for: \"{normalized}\"\n🎯 Result: **{prob:.2f}%**")
+    norm = normalize(sentence)
+    result = round(random.uniform(0, 100), 2)
+    await ctx.send(f"🔍 Probability for: \"{norm}\"\n🎯 Result: **{result:.2f}%**")
 
 @bot.event
 async def on_ready():
     print(f"✅ Logged in as {bot.user} — Ready on {len(bot.guilds)} servers.")
 
+# Minimal Flask Web Server to satisfy Render
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot is running!", 200
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+# Start web server in background thread
+threading.Thread(target=run_web).start()
+
+# Start the bot
 bot.run(TOKEN)
