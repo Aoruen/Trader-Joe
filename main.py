@@ -46,7 +46,7 @@ async def probability(ctx, *, sentence: str):
 async def joe(ctx, *, question: str):
     try:
         completion = client.chat.completions.create(
-            model="deepseek/deepseek-r1:free",
+            model="deepseek/deepseek-r1-0528-qwen3-8b:free",
             messages=[
                 {"role": "system", "content": "You are Trader Joe, a witty and helpful grocery guru."},
                 {"role": "user", "content": question}
