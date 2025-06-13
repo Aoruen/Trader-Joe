@@ -9,15 +9,16 @@ import threading
 
 # Environment Variables
 TOKEN = os.getenv("DISCORD_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")  # renamed to clarify
 
 if not TOKEN:
     raise ValueError("DISCORD_TOKEN environment variable is missing!")
-if not OPENAI_API_KEY:
-    raise ValueError("OPENAI_API_KEY environment variable is missing!")
+if not OPENROUTER_API_KEY:
+    raise ValueError("OPENROUTER_API_KEY environment variable is missing!")
 
-# Set up OpenAI
-openai.api_key = OPENAI_API_KEY
+# Set up OpenRouter
+openai.api_key = OPENROUTER_API_KEY
+openai.api_base = "https://openrouter.ai/api/v1"
 
 # Discord Bot Setup
 intents = discord.Intents.default()
@@ -28,30 +29,33 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip().lower())
 
-# Probability command (kept intact)
+# Probability command
 @bot.command(name="probability", help="Returns a random probability (0–100%) for the given sentence.")
 async def probability(ctx, *, sentence: str):
     norm = normalize(sentence)
     result = round(random.uniform(0, 100), 2)
     await ctx.send(f"🔍 Probability for: \"{norm}\"\n🎯 Result: **{result:.2f}%**")
 
-# AI-Powered Joe Command
+# AI-Powered Joe Command using OpenRouter
 @bot.command(name="joe", help="Ask Trader Joe anything!")
 async def joe(ctx, *, question: str):
     prompt = f"You are Trader Joe, a witty and helpful grocery guru. Respond conversationally to the following:\n\nQ: {question}\nA:"
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",  # Or "gpt-3.5-turbo" for lighter usage
-            messages=[{"role": "user", "content": prompt}],
+            model="mistralai/mistral-7b-instruct",
+            messages=[
+                {"role": "system", "content": "You are Trader Joe, a witty and helpful grocery guru."},
+                {"role": "user", "content": question}
+            ],
             max_tokens=150,
             temperature=0.7
         )
-        reply = response.choices[0].message["content"].strip()
+        reply = response['choices'][0]['message']['content'].strip()
         await ctx.send(reply)
     except Exception as e:
         await ctx.send("🚧 Oops! Trader Joe is out restocking. Try again later.")
-        print(f"OpenAI error: {e}")
+        print(f"OpenRouter error: {e}")
 
 # Bot ready event
 @bot.event
