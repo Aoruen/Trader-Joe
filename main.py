@@ -47,50 +47,27 @@ async def probability(ctx, *, sentence: str):
 # General-purpose AI command (formerly "Trader Joe")
 @bot.command(name="joe", help="Ask anything – AI will respond intelligently.")
 async def joe(ctx, *, question: str):
-    user_id = str(ctx.author.id)
-
-    # Initialize conversation history for user if missing
-    if user_id not in conversation_histories:
-        conversation_histories[user_id] = [
-            {
-                "role": "system",
-                "content": "You are a helpful and knowledgeable assistant who can answer any question clearly and usefully."
-            }
-        ]
-
-    # Append user message to history
-    conversation_histories[user_id].append({"role": "user", "content": question})
-
-    # Keep last 6 messages max
-    conversation_histories[user_id] = conversation_histories[user_id][-6:]
-
     try:
         completion = client.chat.completions.create(
             model="deepseek/deepseek-chat:free",
-            messages=conversation_histories[user_id],
-            max_tokens=5000,
-            temperature=0.7
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a helpful, emotionally expressive assistant. "
+                        "Respond clearly, helpfully, and naturally — feel free to use emojis to show tone and emotion where appropriate. 😊👍"
+                    )
+                },
+                {"role": "user", "content": question}
+            ],
+            max_tokens=1000,
+            temperature=0.75
         )
         reply = completion.choices[0].message.content.strip()
-
-        # Append bot reply to history
-        conversation_histories[user_id].append({"role": "assistant", "content": reply})
-
         await ctx.send(reply)
     except Exception as e:
         await ctx.send("⚠️ Mini Aoruen Crashed The Car. Try again shortly.")
         print(f"[AI Error] {e}")
-
-# Custom help command
-@bot.command(name="help", help="List all available commands.")
-async def help_command(ctx):
-    help_text = (
-        "🛠 **Available Commands:**\n"
-        "**!probability <sentence>** – Get a random probability for your sentence.\n"
-        "**!joe <question>** – Ask any question and get an intelligent AI response.\n"
-        "**!help** – Show this help message."
-    )
-    await ctx.send(help_text)
 
 # Bot ready event
 @bot.event
