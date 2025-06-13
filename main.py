@@ -78,7 +78,7 @@ async def joe(ctx, *, question: str):
 
         await ctx.send(reply)
     except Exception as e:
-        await ctx.send("⚠️ AI Assistant ran into a snag. Try again shortly.")
+        await ctx.send("⚠️ Mini Aoruen Crashed The Car. Try again shortly.")
         print(f"[AI Error] {e}")
 
 # Custom help command
