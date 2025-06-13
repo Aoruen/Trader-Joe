@@ -44,7 +44,7 @@ async def probability(ctx, *, sentence: str):
     result = round(random.uniform(0, 100), 2)
     await ctx.send(f"🔍 Probability for: \"{norm}\"\n🎯 Result: **{result:.2f}%**")
 
-# AI-Powered Joe Command using OpenRouter with conversation history
+# AI-Powered Joe Command using OpenRouter with conversation history and fallback
 @bot.command(name="joe", help="Ask Trader Joe anything!")
 async def joe(ctx, *, question: str):
     user_id = str(ctx.author.id)
@@ -61,25 +61,33 @@ async def joe(ctx, *, question: str):
     # Append user message to history
     conversation_histories[user_id].append({"role": "user", "content": question})
 
-    # Keep last 6 messages max (adjust as needed)
+    # Keep last 6 messages max
     conversation_histories[user_id] = conversation_histories[user_id][-6:]
 
-    try:
-        completion = client.chat.completions.create(
-            model="deepseek/deepseek-r1-0528-qwen3-8b:free",
+    def ask_model(model_name):
+        return client.chat.completions.create(
+            model=model_name,
             messages=conversation_histories[user_id],
             max_tokens=4000,
             temperature=0.7
-        )
-        reply = completion.choices[0].message.content.strip()
+        ).choices[0].message.content.strip()
 
-        # Append bot reply to conversation history
-        conversation_histories[user_id].append({"role": "assistant", "content": reply})
-
-        await ctx.send(reply)
+    try:
+        reply = ask_model("deepseek/deepseek-r1-0528-qwen3-8b:free")
+        if not reply or len(reply) < 2:
+            raise ValueError("Empty response from DeepSeek")
     except Exception as e:
-        await ctx.send("⚠️ Trader Joe ran into a snag. Try again shortly.")
-        print(f"[Trader Joe Error] {e}")
+        print(f"[DeepSeek Error] {e} — falling back to Mixtral.")
+        try:
+            reply = ask_model("mistralai/mixtral-8x7b:free")
+        except Exception as fallback_error:
+            await ctx.send("⚠️ Trader Joe ran into a snag. Try again shortly.")
+            print(f"[Fallback Error] {fallback_error}")
+            return
+
+    # Append bot reply to conversation history
+    conversation_histories[user_id].append({"role": "assistant", "content": reply})
+    await ctx.send(reply)
 
 # Custom help command
 @bot.command(name="help", help="List all available commands.")
