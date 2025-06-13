@@ -31,6 +31,13 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip().lower())
 
+# Prevent the bot from responding to itself
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+    await bot.process_commands(message)
+
 # In-memory conversation history per user (user_id -> list of messages)
 conversation_histories = {}
 
@@ -65,7 +72,7 @@ async def joe(ctx, *, question: str):
         response = client.chat.completions.create(
             model="deepseek/deepseek-r1-0528-qwen3-8b:free",
             messages=conversation_histories[user_id],
-            max_tokens=5000,
+            max_tokens=400,
             temperature=0.75,
         )
         reply = response.choices[0].message.content.strip()
@@ -73,6 +80,7 @@ async def joe(ctx, *, question: str):
         # Append bot's reply to history
         conversation_histories[user_id].append({"role": "assistant", "content": reply})
 
+        # Send plain text message (no embed)
         await ctx.send(reply)
 
     except Exception as e:
