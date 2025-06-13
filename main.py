@@ -68,7 +68,7 @@ async def joe(ctx, *, question: str):
         completion = client.chat.completions.create(
             model="deepseek/deepseek-v3-base:free",
             messages=conversation_histories[user_id],
-            max_tokens=10000,
+            max_tokens=5000,
             temperature=0.7
         )
         reply = completion.choices[0].message.content.strip()
