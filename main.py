@@ -68,7 +68,7 @@ async def joe(ctx, *, question: str):
         return client.chat.completions.create(
             model=model_name,
             messages=conversation_histories[user_id],
-            max_tokens=4000,
+            max_tokens=125000,
             temperature=0.7
         ).choices[0].message.content.strip()
 
