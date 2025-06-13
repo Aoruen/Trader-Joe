@@ -44,8 +44,8 @@ async def probability(ctx, *, sentence: str):
     result = round(random.uniform(0, 100), 2)
     await ctx.send(f"🔍 Probability for: \"{norm}\"\n🎯 Result: **{result:.2f}%**")
 
-# AI-Powered Joe Command using OpenRouter with conversation history
-@bot.command(name="joe", help="Ask Trader Joe anything!")
+# General-purpose AI command (formerly "Trader Joe")
+@bot.command(name="joe", help="Ask anything – AI will respond intelligently.")
 async def joe(ctx, *, question: str):
     user_id = str(ctx.author.id)
 
@@ -54,14 +54,14 @@ async def joe(ctx, *, question: str):
         conversation_histories[user_id] = [
             {
                 "role": "system",
-                "content": "You are Trader Joe, a witty and helpful grocery guru."
+                "content": "You are a helpful and knowledgeable assistant who can answer any question clearly and usefully."
             }
         ]
 
     # Append user message to history
     conversation_histories[user_id].append({"role": "user", "content": question})
 
-    # Keep last 6 messages max (adjust as needed)
+    # Keep last 6 messages max
     conversation_histories[user_id] = conversation_histories[user_id][-6:]
 
     try:
@@ -73,13 +73,13 @@ async def joe(ctx, *, question: str):
         )
         reply = completion.choices[0].message.content.strip()
 
-        # Append bot reply to conversation history
+        # Append bot reply to history
         conversation_histories[user_id].append({"role": "assistant", "content": reply})
 
         await ctx.send(reply)
     except Exception as e:
-        await ctx.send("⚠️ Trader Joe ran into a snag. Try again shortly.")
-        print(f"[Trader Joe Error] {e}")
+        await ctx.send("⚠️ AI Assistant ran into a snag. Try again shortly.")
+        print(f"[AI Error] {e}")
 
 # Custom help command
 @bot.command(name="help", help="List all available commands.")
@@ -87,7 +87,7 @@ async def help_command(ctx):
     help_text = (
         "🛠 **Available Commands:**\n"
         "**!probability <sentence>** – Get a random probability for your sentence.\n"
-        "**!joe <question>** – Ask Trader Joe a witty grocery-related question.\n"
+        "**!joe <question>** – Ask any question and get an intelligent AI response.\n"
         "**!help** – Show this help message."
     )
     await ctx.send(help_text)
