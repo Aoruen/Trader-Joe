@@ -18,7 +18,7 @@ if not OPENROUTER_API_KEY:
 
 # Set up OpenRouter
 openai.api_key = OPENROUTER_API_KEY
-openai.api_base = "https://openrouter.ai/api/v1"
+openai.api_base = "https://openrouter.ai/api/v1/chat/completions"
 
 # Discord Bot Setup
 intents = discord.Intents.default()
