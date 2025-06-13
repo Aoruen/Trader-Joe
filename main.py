@@ -44,7 +44,7 @@ async def probability(ctx, *, sentence: str):
     result = round(random.uniform(0, 100), 2)
     await ctx.send(f"🔍 Probability for: \"{norm}\"\n🎯 Result: **{result:.2f}%**")
 
-# AI-Powered Joe Command using OpenRouter with fallback model
+# AI-Powered Joe Command using OpenRouter with conversation history
 @bot.command(name="joe", help="Ask Trader Joe anything!")
 async def joe(ctx, *, question: str):
     user_id = str(ctx.author.id)
@@ -66,31 +66,20 @@ async def joe(ctx, *, question: str):
 
     try:
         completion = client.chat.completions.create(
-            model="deepseek/deepseek-r1-0528-qwen3-8b:free",
+            model="deepseek/deepseek-v3-base:free",
             messages=conversation_histories[user_id],
-            max_tokens=125000,
+            max_tokens=128000,
             temperature=0.7
         )
         reply = completion.choices[0].message.content.strip()
+
+        # Append bot reply to conversation history
+        conversation_histories[user_id].append({"role": "assistant", "content": reply})
+
+        await ctx.send(reply)
     except Exception as e:
-        print(f"[Primary Model Error] {e}")
-        try:
-            completion = client.chat.completions.create(
-                model="mistralai/mistral-small-3.1-24b-instruct:free",
-                messages=conversation_histories[user_id],
-                max_tokens=125000,
-                temperature=0.7
-            )
-            reply = completion.choices[0].message.content.strip()
-        except Exception as e2:
-            print(f"[Fallback Model Error] {e2}")
-            await ctx.send("⚠️ Trader Joe ran into a double snag. Try again soon.")
-            return
-
-    # Append bot reply to conversation history
-    conversation_histories[user_id].append({"role": "assistant", "content": reply})
-
-    await ctx.send(reply)
+        await ctx.send("⚠️ Trader Joe ran into a snag. Try again shortly.")
+        print(f"[Trader Joe Error] {e}")
 
 # Custom help command
 @bot.command(name="help", help="List all available commands.")
