@@ -51,7 +51,7 @@ async def joe(ctx, *, question: str):
                 {"role": "system", "content": "You are Trader Joe, a witty and helpful grocery guru."},
                 {"role": "user", "content": question}
             ],
-            max_tokens=512,
+            max_tokens=4000,
             temperature=0.7
         )
         reply = completion.choices[0].message.content.strip()
