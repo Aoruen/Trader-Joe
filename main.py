@@ -66,7 +66,7 @@ async def joe(ctx, *, question: str):
 
     try:
         completion = client.chat.completions.create(
-            model="mistralai/mistral-small-3.1-24b-instruct:free",
+            model="deepseek/deepseek-chat:free",
             messages=conversation_histories[user_id],
             max_tokens=5000,
             temperature=0.7
