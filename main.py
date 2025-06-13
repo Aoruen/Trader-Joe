@@ -23,7 +23,7 @@ openai.api_base = "https://openrouter.ai/api/v1"
 # Discord Bot Setup
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)  # Disable default help
 
 # Normalize helper
 def normalize(text: str) -> str:
@@ -36,19 +36,17 @@ async def probability(ctx, *, sentence: str):
     result = round(random.uniform(0, 100), 2)
     await ctx.send(f"🔍 Probability for: \"{norm}\"\n🎯 Result: **{result:.2f}%**")
 
-# AI-Powered Joe Command using OpenRouter
+# AI-Powered Joe Command using OpenRouter with your deepseek model
 @bot.command(name="joe", help="Ask Trader Joe anything!")
 async def joe(ctx, *, question: str):
-    prompt = f"You are Trader Joe, a witty and helpful grocery guru. Respond conversationally to the following:\n\nQ: {question}\nA:"
-
     try:
         response = openai.ChatCompletion.create(
-            model="mistralai/mistral-7b-instruct",
+            model="deepseek/deepseek-r1-0528-qwen3-8b:free",
             messages=[
                 {"role": "system", "content": "You are Trader Joe, a witty and helpful grocery guru."},
                 {"role": "user", "content": question}
             ],
-            max_tokens=150,
+            max_tokens=4096,  # max tokens set high, as allowed by the model
             temperature=0.7
         )
         reply = response['choices'][0]['message']['content'].strip()
@@ -56,6 +54,19 @@ async def joe(ctx, *, question: str):
     except Exception as e:
         await ctx.send("🚧 Oops! Trader Joe is out restocking. Try again later.")
         print(f"OpenRouter error: {e}")
+
+# Plain text help command (clean and formatted)
+@bot.command(name="help", help="Shows this help message.")
+async def help_command(ctx):
+    help_lines = ["**Help - List of Commands**", "Use `!<command>` to run a command.\n"]
+    for command in bot.commands:
+        if command.hidden or not command.help:
+            continue
+        help_lines.append(f"**!{command.name}** - {command.help}")
+    help_message = "\n".join(help_lines)
+    # Discord message limit is ~2000 chars, so split if needed
+    for chunk in [help_message[i:i+1900] for i in range(0, len(help_message), 1900)]:
+        await ctx.send(chunk)
 
 # Bot ready event
 @bot.event
