@@ -44,7 +44,7 @@ async def probability(ctx, *, sentence: str):
     result = round(random.uniform(0, 100), 2)
     await ctx.send(f"🔍 Probability for: \"{norm}\"\n🎯 Result: **{result:.2f}%**")
 
-# AI-Powered Joe Command using OpenRouter with conversation history and fallback
+# AI-Powered Joe Command using OpenRouter with fallback model
 @bot.command(name="joe", help="Ask Trader Joe anything!")
 async def joe(ctx, *, question: str):
     user_id = str(ctx.author.id)
@@ -61,32 +61,35 @@ async def joe(ctx, *, question: str):
     # Append user message to history
     conversation_histories[user_id].append({"role": "user", "content": question})
 
-    # Keep last 6 messages max
+    # Keep last 6 messages max (adjust as needed)
     conversation_histories[user_id] = conversation_histories[user_id][-6:]
 
-    def ask_model(model_name):
-        return client.chat.completions.create(
-            model=model_name,
+    try:
+        completion = client.chat.completions.create(
+            model="deepseek/deepseek-r1-0528-qwen3-8b:free",
             messages=conversation_histories[user_id],
             max_tokens=125000,
             temperature=0.7
-        ).choices[0].message.content.strip()
-
-    try:
-        reply = ask_model("deepseek/deepseek-r1-0528-qwen3-8b:free")
-        if not reply or len(reply) < 2:
-            raise ValueError("Empty response from DeepSeek")
+        )
+        reply = completion.choices[0].message.content.strip()
     except Exception as e:
-        print(f"[DeepSeek Error] {e} — falling back to Mixtral.")
+        print(f"[Primary Model Error] {e}")
         try:
-            reply = ask_model("mistralai/mistral-small-3.1-24b-instruct:free")
-        except Exception as fallback_error:
-            await ctx.send("⚠️ Trader Joe ran into a snag. Try again shortly.")
-            print(f"[Fallback Error] {fallback_error}")
+            completion = client.chat.completions.create(
+                model="mistralai/mistral-small-3.1-24b-instruct:free",
+                messages=conversation_histories[user_id],
+                max_tokens=125000,
+                temperature=0.7
+            )
+            reply = completion.choices[0].message.content.strip()
+        except Exception as e2:
+            print(f"[Fallback Model Error] {e2}")
+            await ctx.send("⚠️ Trader Joe ran into a double snag. Try again soon.")
             return
 
     # Append bot reply to conversation history
     conversation_histories[user_id].append({"role": "assistant", "content": reply})
+
     await ctx.send(reply)
 
 # Custom help command
