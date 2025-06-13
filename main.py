@@ -68,7 +68,18 @@ async def joe(ctx, *, question: str):
     except Exception as e:
         await ctx.send("⚠️ Mini Aoruen Crashed The Car. Try again shortly.")
         print(f"[AI Error] {e}")
-
+        
+# Custom help command
+@bot.command(name="help", help="List all available commands.")
+async def help_command(ctx):
+    help_text = (
+        "🛠 **Available Commands:**\n"
+        "• `!probability <sentence>` – Get a random probability score for your sentence.\n"
+        "• `!joe <question>` – Ask the AI anything you want.\n"
+        "• `!help` – Show this help message. 😊"
+    )
+    await ctx.send(help_text)
+    
 # Bot ready event
 @bot.event
 async def on_ready():
