@@ -79,7 +79,7 @@ async def joe(ctx, *, question: str):
     except Exception as e:
         print(f"[DeepSeek Error] {e} — falling back to Mixtral.")
         try:
-            reply = ask_model("mistralai/mixtral-8x7b:free")
+            reply = ask_model("mistralai/mistral-small-3.1-24b-instruct:free")
         except Exception as fallback_error:
             await ctx.send("⚠️ Trader Joe ran into a snag. Try again shortly.")
             print(f"[Fallback Error] {fallback_error}")
