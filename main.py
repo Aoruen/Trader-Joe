@@ -34,6 +34,9 @@ bot.remove_command("help")
 def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip().lower())
 
+# In-memory conversation history per user
+conversation_histories = {}
+
 # Probability command
 @bot.command(name="probability", help="Returns a random probability (0–100%) for the given sentence.")
 async def probability(ctx, *, sentence: str):
@@ -41,20 +44,38 @@ async def probability(ctx, *, sentence: str):
     result = round(random.uniform(0, 100), 2)
     await ctx.send(f"🔍 Probability for: \"{norm}\"\n🎯 Result: **{result:.2f}%**")
 
-# AI-Powered Joe Command using OpenRouter
+# AI-Powered Joe Command using OpenRouter with conversation history
 @bot.command(name="joe", help="Ask Trader Joe anything!")
 async def joe(ctx, *, question: str):
+    user_id = str(ctx.author.id)
+
+    # Initialize conversation history for user if missing
+    if user_id not in conversation_histories:
+        conversation_histories[user_id] = [
+            {
+                "role": "system",
+                "content": "You are Trader Joe, a witty and helpful grocery guru."
+            }
+        ]
+
+    # Append user message to history
+    conversation_histories[user_id].append({"role": "user", "content": question})
+
+    # Keep last 6 messages max (adjust as needed)
+    conversation_histories[user_id] = conversation_histories[user_id][-6:]
+
     try:
         completion = client.chat.completions.create(
             model="deepseek/deepseek-r1-0528-qwen3-8b:free",
-            messages=[
-                {"role": "system", "content": "You are Trader Joe, a witty and helpful grocery guru."},
-                {"role": "user", "content": question}
-            ],
+            messages=conversation_histories[user_id],
             max_tokens=4000,
             temperature=0.7
         )
         reply = completion.choices[0].message.content.strip()
+
+        # Append bot reply to conversation history
+        conversation_histories[user_id].append({"role": "assistant", "content": reply})
+
         await ctx.send(reply)
     except Exception as e:
         await ctx.send("⚠️ Trader Joe ran into a snag. Try again shortly.")
