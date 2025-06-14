@@ -60,7 +60,7 @@ async def joe(ctx, *, question: str):
                 },
                 {"role": "user", "content": question}
             ],
-            max_tokens=1000,
+            max_tokens=3000,
             temperature=0.75
         )
         reply = completion.choices[0].message.content.strip()
