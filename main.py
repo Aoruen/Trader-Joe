@@ -34,6 +34,10 @@ bot.remove_command("help")
 def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip().lower())
 
+# Split messages to respect Discord's 2000-character limit
+def split_message(message, max_length=2000):
+    return [message[i:i+max_length] for i in range(0, len(message), max_length)]
+
 # In-memory conversation history per user
 conversation_histories = {}
 
@@ -44,7 +48,7 @@ async def probability(ctx, *, sentence: str):
     result = round(random.uniform(0, 100), 2)
     await ctx.send(f"🔍 Probability for: \"{norm}\"\n🎯 Result: **{result:.2f}%**")
 
-# General-purpose AI command (formerly "Trader Joe")
+# General-purpose AI command
 @bot.command(name="joe", help="Ask anything – AI will respond intelligently.")
 async def joe(ctx, *, question: str):
     try:
@@ -55,21 +59,25 @@ async def joe(ctx, *, question: str):
                     "role": "system",
                     "content": (
                         "You are a helpful, emotionally expressive assistant. "
-                        "Respond clearly, helpfully, and naturally — feel free to use emojis to show tone and emotion where appropriate. 😊👍"
+                        "Respond clearly, helpfully, and naturally — feel free to use emojis to show tone and emotion. 😊👍 "
+                        "Provide links to sources when relevant."
                     )
                 },
                 {"role": "user", "content": question}
             ],
-            max_tokens=1500,
+            max_tokens=2000,
             temperature=0.75
         )
         reply = completion.choices[0].message.content.strip()
-        await ctx.send(reply)
+
+        for chunk in split_message(reply):
+            await ctx.send(chunk)
+
     except Exception as e:
         await ctx.send("⚠️ Mini Aoruen Crashed The Car. Try again shortly.")
         print(f"[AI Error] {e}")
-        
-# Custom help command
+
+# Help command
 @bot.command(name="help", help="List all available commands.")
 async def help_command(ctx):
     help_text = (
@@ -79,7 +87,7 @@ async def help_command(ctx):
         "• `!help` – Show this help message. 😊"
     )
     await ctx.send(help_text)
-    
+
 # Bot ready event
 @bot.event
 async def on_ready():
