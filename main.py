@@ -34,9 +34,17 @@ bot.remove_command("help")
 def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip().lower())
 
-# Split messages to respect Discord's 2000-character limit
+# Split long messages
 def split_message(message, max_length=2000):
     return [message[i:i+max_length] for i in range(0, len(message), max_length)]
+
+# Global DM blocker
+@bot.check
+async def block_dms(ctx):
+    if isinstance(ctx.channel, discord.DMChannel):
+        await ctx.send("🙅‍♂️ Sorry, I don’t respond to DMs. Try using me in a server!")
+        return False
+    return True
 
 # In-memory conversation history per user
 conversation_histories = {}
